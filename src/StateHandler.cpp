@@ -26,6 +26,9 @@ void StateHandler::transition(Events_E event, MQTTClient* mqtt_client) {
         case DENIED_ACCESS:
             state = DENIED;
             break;
+        case RESET:
+            state = IDLE;
+            break;
         default:
             break;
     }

@@ -41,7 +41,9 @@ void MQTTClient::setupWiFi() {
 void MQTTClient::callback(char* topic, byte* payload, unsigned int length) {
   Serial.print("TOPIC: ");
   Serial.println(topic);
-  if (strcmp(topic, "parkhaus/einfahrt") == 0) { // Inhalt vergleichen
+  States_E currentState = StateHandler::getInstance().getState(); 
+  Serial.println(currentState);
+  if (strcmp(topic, "parkhaus/einfahrt") == 0 && StateHandler::getInstance().getState() == CHECKING) { // Inhalt vergleichen
     Serial.println("INSIDE IF");
     if (attempCount < 10) {
       char* msg = new char[length + 1]; // Genügend Speicher reservieren + Nullterminator

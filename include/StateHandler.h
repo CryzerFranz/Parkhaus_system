@@ -5,7 +5,7 @@
 #include "MQTTClient.h"
 
 enum States_E { GRANTED, DENIED, CHECKING, IDLE };
-enum Events_E { IN_DETECT, OUT_DETECT, GRANTED_ACCESS, DENIED_ACCESS };
+enum Events_E { IN_DETECT, OUT_DETECT, GRANTED_ACCESS, DENIED_ACCESS, RESET };
 
 class StateHandler {
 private:
