@@ -1,9 +1,11 @@
 #include "MQTTClient.h"
+#include "StateHandler.h"
+#include <cstring>
 
 MQTTClient::MQTTClient(const char* wifiSsid, const char* wifiPassword, 
                        const char* server, int port, const char* id) 
-  : ssid(wifiSsid), password(wifiPassword), mqttServer(server), 
-    mqttPort(port), clientId(id), mqttClient(wifiClient), lastMsg(0) {
+  : ssid(wifiSsid), password(wifiPassword), mqttServer(server),
+    mqttPort(port), clientId(id), mqttClient(wifiClient), lastMsg(0), attempCount(0) {
 }
 
 void MQTTClient::setupWiFi() {
@@ -19,9 +21,6 @@ void MQTTClient::setupWiFi() {
   //WiFi.begin(const_cast<char*>(ssid), const_cast<char*>(password));
   WiFi.begin("SCHB001", "schb001!");
   Serial.println("WiFi.begin executed");
-
-
-
 
   Serial.print("Connecting to ");
   Serial.println(ssid);
@@ -40,13 +39,30 @@ void MQTTClient::setupWiFi() {
 }
 
 void MQTTClient::callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived [");
-  Serial.print(topic);
-  Serial.print("] ");
-  for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
+  Serial.print("TOPIC: ");
+  Serial.println(topic);
+  if (strcmp(topic, "parkhaus/einfahrt") == 0) { // Inhalt vergleichen
+    Serial.println("INSIDE IF");
+    if (attempCount < 10) {
+      char* msg = new char[length + 1]; // Genügend Speicher reservieren + Nullterminator
+      for (int i = 0; i < length; i++) {
+        msg[i] = (char)payload[i];
+      }
+      msg[length] = '\0'; // String terminieren
+      Serial.println(msg);
+
+      if (strcmp(msg, "denied") == 0) { // Ebenfalls Inhalt vergleichen
+        attempCount++;
+      } else {
+        attempCount = 0;
+        StateHandler::getInstance().transition(GRANTED_ACCESS, this);
+      }
+      delete[] msg; // Array löschen, da mit new[] allokiert
+    } else {
+      attempCount = 0;
+      StateHandler::getInstance().transition(DENIED_ACCESS, this);
+    }
   }
-  Serial.println();
 }
 
 void MQTTClient::reconnect() {
@@ -54,7 +70,6 @@ void MQTTClient::reconnect() {
     Serial.print("Attempting MQTT connection...");
     if (mqttClient.connect(clientId)) {
       Serial.println("connected");
-      mqttClient.subscribe("test/topic");
     } else {
       Serial.print("failed, rc=");
       Serial.print(mqttClient.state());
@@ -85,10 +100,21 @@ void MQTTClient::begin() {
 }
 
 void MQTTClient::run() {
+  while(WiFi.status() != WL_CONNECTED) {
+    Serial.println("🔌 WiFi disconnected! Trying to reconnect...");
+    WiFi.disconnect();
+    WiFi.reconnect();
+    delay(3000);
+  }
   if (!mqttClient.connected()) {
     reconnect();
   }
+  subscribe("parkhaus/einfahrt");
   mqttClient.loop();
+}
+
+void MQTTClient::subscribe(const char* topic) {
+  mqttClient.subscribe(topic);
 }
 
 void MQTTClient::sendMessage(const char* topic, const char* msg)

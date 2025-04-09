@@ -1,32 +1,49 @@
 #include <Arduino.h>
-// #include <WiFi.h>
 #include "MQTTClient.h"
+#include "MotionSensor.h"
+#include "StateHandler.h"
+#include "Rotor.h"
 
 #define BWG_SENSOR_EINFAHRT 26
+#define BWG_SENSOR_AUSFAHRT 25
 
+MotionSensor in_motion = MotionSensor(BWG_SENSOR_EINFAHRT);
+MotionSensor out_motion = MotionSensor(BWG_SENSOR_AUSFAHRT);
 
 // Create an instance of MQTTClient
 MQTTClient mqtt_client = MQTTClient("SCHB001", "schb001!", 
-  "172.5.233.116", 1883, "ArduinoClient");
+  "172.5.232.218", 1883, "ArduinoClient");
+
+StateHandler& stateHandler = StateHandler::getInstance();
 
 void setup() {
-  // put your setup code here, to run once:
   Serial.begin(115200);
   mqtt_client.begin();
-  pinMode(BWG_SENSOR_EINFAHRT, INPUT);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
   mqtt_client.run();
-  int motion = digitalRead(BWG_SENSOR_EINFAHRT);  // Lese den Zustand des Sensors
-  if (motion == HIGH) {
-    mqtt_client.sendMessage("parkhaus/einfahrt","1");
-    Serial.println("🚨 Bewegung erkannt!");
-  } else {
-    mqtt_client.sendMessage("parkhaus/einfahrt","0");
-    Serial.println("🔵 Keine Bewegung");
+
+  switch(stateHandler.getState())
+  {
+    case IDLE:
+      if(in_motion.isMotion())
+      {
+        stateHandler.transition(IN_DETECT, &mqtt_client);
+        Serial.println("HALLO");
+      }
+      if(out_motion.isMotion())
+      {
+        stateHandler.transition(OUT_DETECT, &mqtt_client);
+      }
+      delay(500);
+      break;
+    case CHECKING:
+        
+      break; 
+    case GRANTED:
+      Serial.println("ACCESSSSSSSS");
+      break;
   }
-  delay(500);  // Kurze Pause, um das Log nicht zu überfluten
 }
 

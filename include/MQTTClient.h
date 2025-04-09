@@ -11,6 +11,7 @@ private:
   const char* mqttServer;
   int mqttPort;
   const char* clientId;
+  int attempCount;
   
   WiFiClient wifiClient;
   PubSubClient mqttClient;
@@ -26,6 +27,7 @@ public:
   void begin();
   void run();
   void sendMessage(const char* topic,const char* msg);
+  void subscribe(const char* topic);
 };
 
 #endif // MQTT_CLIENT_H
