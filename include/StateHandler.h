@@ -10,8 +10,7 @@ enum Events_E { IN_DETECT, OUT_DETECT, GRANTED_ACCESS, DENIED_ACCESS, RESET };
 class StateHandler {
 private:
     States_E state;
-
-    // Private constructor for Singleton
+    int car_count;
     StateHandler();
 
 public:
@@ -24,6 +23,8 @@ public:
     void transition(Events_E event, MQTTClient* mqtt);
     States_E getState() const;
     void setState(States_E s);
+    int getCarCount() const;
+    void setCarCount(int value);
 };
 
 #endif // MQTT_CLIENT_H

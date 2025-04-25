@@ -2,6 +2,7 @@
 
 StateHandler::StateHandler() {
     state = IDLE;
+    car_count = 0;
 }
 
 // Get the singleton instance
@@ -39,8 +40,14 @@ States_E StateHandler::getState() const {
     return state;
 }
 
+int StateHandler::getCarCount() const {
+    return car_count;
+}
 // Manually set the state
 void StateHandler::setState(States_E s) {
     state = s;
 }
 
+void StateHandler::setCarCount(int value) {
+    car_count = value;
+}

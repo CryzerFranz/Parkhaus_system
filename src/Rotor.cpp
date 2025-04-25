@@ -5,9 +5,9 @@ Rotor::Rotor(){
 }
 
 void Rotor::open(){
-    this->s_rotor.write(-180);
+    this->s_rotor.write(0);
 }
 
 void Rotor::close(){
-    this->s_rotor.write(80);
+    this->s_rotor.write(90);
 }

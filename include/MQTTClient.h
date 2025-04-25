@@ -6,8 +6,8 @@
 
 class MQTTClient {
 private:
-  const char* ssid;
-  const char* password;
+  //const char* ssid;
+  //const char* password;
   const char* mqttServer;
   int mqttPort;
   const char* clientId;
@@ -22,7 +22,7 @@ private:
   void reconnect();
 
 public:
-  MQTTClient(const char* wifiSsid, const char* wifiPassword, 
+  MQTTClient( 
              const char* server, int port, const char* id);
   void begin();
   void run();

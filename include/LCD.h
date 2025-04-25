@@ -1,5 +1,5 @@
-#ifndef LCDTIMEDISPLAY_H
-#define LCDTIMEDISPLAY_H
+#ifndef LCD_H
+#define LCD_H
 
 #include <Arduino.h>
 #include <Wire.h>

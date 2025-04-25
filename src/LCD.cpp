@@ -1,4 +1,4 @@
-#include "LCDTimeDisplay.h"
+#include "LCD.h"
 
 LCDTimeDisplay::LCDTimeDisplay(uint8_t lcdAddr, uint8_t cols, uint8_t rows) 
     : lcdColumns(cols), lcdRows(rows), lastUpdate(0) {
@@ -12,12 +12,12 @@ void LCDTimeDisplay::begin() {
     timeClient->begin();
     
     // WLAN-Verbindung herstellen
-    WiFi.begin("DEIN_WLAN_NAME", "DEIN_WLAN_PASSWORT");
+    // WiFi.begin("DEIN_WLAN_NAME", "DEIN_WLAN_PASSWORT");
     
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        lcd->print("Verbinden...");
-    }
+    // while (WiFi.status() != WL_CONNECTED) {
+    //     delay(500);
+    //     lcd->print("Verbinden...");
+    // }
     
     lcd->clear();
     timeClient->update();
