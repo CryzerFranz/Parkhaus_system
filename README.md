@@ -55,3 +55,29 @@ Stelle sicher, dass die WLAN-Zugangsdaten in den `build_flags` korrekt sind, um 
 - Die MQTT-Kommunikation basiert auf der PubSubClient-Bibliothek. Stelle sicher, dass ein MQTT-Broker verfügbar ist.
 - Das LCD-Display verwendet die I2C-Schnittstelle zur Kommunikation.
 - Die Servos und LEDs werden über die angegebenen GPIO-Pins angesteuert.
+
+## MQTT-Kommunikation
+
+Die Kommunikation erfolgt über folgende MQTT-Topics:
+
+### Topics
+- `parkhaus/einfahrt`
+- `parkhaus/einfahrt_motion`
+
+#### Topic: `parkhaus/einfahrt_motion`
+Dieses Topic übermittelt einen Binärwert:
+- `1`: Bewegung an der Einfahrt des Parkhauses erkannt
+- `0`: Keine Bewegung erkannt
+
+#### Topic: `parkhaus/einfahrt`
+Dieses Topic übermittelt ein JSON-Objekt im folgenden Format:
+
+```json
+{
+  "status": "granted",
+  "kennzeichen": "<plate>"
+}
+```
+
+- **status**: Entweder `"granted"` (Zufahrt erlaubt) oder `"denied"` (Zufahrt verweigert)
+- **kennzeichen**: Das erkannte Fahrzeugkennzeichen, gespeichert in der Variable `<plate>`
