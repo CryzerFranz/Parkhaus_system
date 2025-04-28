@@ -1,62 +1,44 @@
 #include "MQTTClient.h"
 #include "StateHandler.h"
 #include <cstring>
+#include <ArduinoJson.h>
+#include "LCD.H"
 
 MQTTClient::MQTTClient(const char* server, int port, const char* id) 
   : mqttServer(server), mqttPort(port), clientId(id), mqttClient(wifiClient), lastMsg(0), attempCount(0) {
 }
 
-// void MQTTClient::setupWiFi() {
-//   delay(10);
-
-//   Serial.println("Entering setupWiFi");
-//   delay(10);
-//   Serial.print("SSID is: ");
-//   Serial.println(ssid ? ssid : "NULL"); // Check if ssid is valid
-//   Serial.print("Password is: ");
-//   Serial.println(password ? password : "NULL"); // Check if password is valid
-//   Serial.println("Calling WiFi.begin");
-//   //WiFi.begin(const_cast<char*>(ssid), const_cast<char*>(password));
-//   WiFi.begin("SCHB001", "schb001!");
-//   Serial.println("WiFi.begin executed");
-
-//   Serial.print("Connecting to ");
-//   Serial.println(ssid);
-
-//   WiFi.begin(const_cast<char*>(ssid), password);
-
-//   while (WiFi.status() != WL_CONNECTED) {
-//     delay(500);
-//     Serial.print(".");
-//   }
-
-//   Serial.println("");
-//   Serial.println("Wi-Fi connected");
-//   Serial.println("IP address: ");
-//   Serial.println(WiFi.localIP());
-// }
-
 void MQTTClient::callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("TOPIC: ");
-  Serial.println(topic);
   States_E currentState = StateHandler::getInstance().getState();
   if (strcmp(topic, "parkhaus/einfahrt") == 0 && currentState == CHECKING) {
-    char msg[32]; // Statischer Buffer, Größe anpassen (z. B. max. Payload-Länge)
-    if (length >= sizeof(msg)) length = sizeof(msg) - 1; // Begrenze Länge
+    char msg[256]; // Adjust size as needed
+    if (length >= sizeof(msg)) length = sizeof(msg) - 1;
     memcpy(msg, payload, length);
     msg[length] = '\0';
     Serial.println(msg);
 
-    if (attempCount < 10) {
-      if (strcmp(msg, "denied") == 0) {
-        attempCount++;
+    StaticJsonDocument<256> doc;
+    DeserializationError error = deserializeJson(doc, msg);
+
+    if (!error) {
+      // Parsing successful, read "status" and "kennzeichen"
+      const char* status = doc["status"];
+      const char* plate = doc["kennzeichen"];
+      LCDisplay::getInstance().updatePlate(plate);
+      Serial.println("Attemp: ");
+      Serial.println(attempCount);
+
+      if (attempCount < 10) {
+        if (strcmp(status, "denied") == 0) {
+          attempCount++;
+        } else {
+          attempCount = 0;
+          StateHandler::getInstance().transition(GRANTED_ACCESS, this);
+        }
       } else {
         attempCount = 0;
-        StateHandler::getInstance().transition(GRANTED_ACCESS, this);
+        StateHandler::getInstance().transition(DENIED_ACCESS, this);
       }
-    } else {
-      attempCount = 0;
-      StateHandler::getInstance().transition(DENIED_ACCESS, this);
     }
   }
 }

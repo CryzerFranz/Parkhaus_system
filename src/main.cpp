@@ -8,6 +8,7 @@
 
 #define BWG_SENSOR_EINFAHRT 26
 #define BWG_SENSOR_AUSFAHRT 25
+#define MANUELLE_STEUERUNG_SCHRANKE 12
 
 #define LED_ROT 18
 #define LED_GRUEN 19
@@ -22,7 +23,9 @@ MQTTClient mqtt_client = MQTTClient(
 StateHandler& stateHandler = StateHandler::getInstance();
 Rotor schranke = Rotor();
 
-LCDTimeDisplay display = LCDTimeDisplay();
+LCDisplay& display = LCDisplay::getInstance();
+
+long prevTime = -1;
 
 void setup() {
   Serial.begin(115200);
@@ -42,8 +45,25 @@ void setup() {
   mqtt_client.begin();
   display.begin();
 
+  pinMode(MANUELLE_STEUERUNG_SCHRANKE, INPUT);
   pinMode(LED_ROT, OUTPUT);
   pinMode(LED_GRUEN, OUTPUT);
+}
+
+bool checkTimePass()
+{
+  long diffTime = millis() - prevTime;
+  if(diffTime > 4000)
+  {
+    return true;
+  }
+  return false;
+}
+
+void switchStateAfterTimePassed(Events_E event)
+{
+  stateHandler.transition(event, &mqtt_client);
+  prevTime = -1;
 }
 
 void loop() {
@@ -68,6 +88,11 @@ void loop() {
     digitalWrite(LED_GRUEN, HIGH);
   }
 
+  // if (digitalRead(MANUELLE_STEUERUNG_SCHRANKE) == LOW) {
+  //   Serial.println("hallo");
+  //     stateHandler.transition(OPEN, &mqtt_client);
+  // }
+  // unsigned long currentTime = millis();
   switch(stateHandler.getState())
   {
     case IDLE:
@@ -76,19 +101,18 @@ void loop() {
         if(in_motion.isMotion())
         {
           stateHandler.transition(IN_DETECT, &mqtt_client);
-          Serial.println("HALLO");
         }
       }
       if(out_motion.isMotion())
       {
-        Serial.println("Tschuesss");
         if(carCount > 0)
         {
           stateHandler.setCarCount(carCount - 1);
         }
-        schranke.open();
-        delay(5000);
-        schranke.close();
+        stateHandler.transition(OPEN, &mqtt_client);
+        // schranke.open();
+        // delay(5000);
+        // schranke.close();
       }
       delay(500);
       break;
@@ -96,13 +120,40 @@ void loop() {
         Serial.print(".");
       break; 
     case GRANTED:
-      Serial.println("ACCESSSSSSSS");
+      Serial.println("ACCESS GRANTED");
       stateHandler.setCarCount(carCount + 1);
-      schranke.open();
-      delay(5000);
-      schranke.close();
-      stateHandler.transition(RESET, &mqtt_client);
+      // schranke.open();
+      // delay(5000);
+      // schranke.close();
+      stateHandler.transition(OPEN, &mqtt_client);
       break;
+    case OPENING:
+      Serial.println("OPENING THE GATE");
+      if(prevTime == -1)
+      {
+        schranke.open();
+        prevTime = millis();
+      }
+      if(checkTimePass())
+      {
+        switchStateAfterTimePassed(CLOSE);
+      }
+      break;
+    case CLOSING:
+      display.updatePlate("");
+      if(prevTime == -1)
+      {
+        prevTime = millis();
+        schranke.close();
+      }
+      if(checkTimePass())
+      {
+        switchStateAfterTimePassed(RESET);
+      }
+      break;
+    case DENIED:
+      stateHandler.transition(RESET, &mqtt_client);
+
   }
 }
 

@@ -8,7 +8,7 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 
-class LCDTimeDisplay {
+class LCDisplay {
 private:
     LiquidCrystal_I2C* lcd;
     WiFiUDP ntpUDP;
@@ -16,12 +16,17 @@ private:
     uint8_t lcdColumns;
     uint8_t lcdRows;
     unsigned long lastUpdate;
+    LCDisplay(uint8_t lcdAddr = 0x27, uint8_t cols = 16, uint8_t rows = 2);
 
 public:
-    LCDTimeDisplay(uint8_t lcdAddr = 0x27, uint8_t cols = 16, uint8_t rows = 2);
+    LCDisplay(const LCDisplay&) = delete;
+    LCDisplay& operator=(const LCDisplay&) = delete;
+    static LCDisplay& getInstance();
+
     void begin();
     void updateTime();
-    ~LCDTimeDisplay();
+    void updatePlate(const char* plate);
+    ~LCDisplay();
 };
 
 #endif

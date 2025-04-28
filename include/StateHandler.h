@@ -4,8 +4,8 @@
 #include <Arduino.h>
 #include "MQTTClient.h"
 
-enum States_E { GRANTED, DENIED, CHECKING, IDLE };
-enum Events_E { IN_DETECT, OUT_DETECT, GRANTED_ACCESS, DENIED_ACCESS, RESET };
+enum States_E { GRANTED, DENIED, CHECKING, IDLE, OPENING, CLOSING };
+enum Events_E { IN_DETECT, OUT_DETECT, GRANTED_ACCESS, DENIED_ACCESS, RESET, OPEN, CLOSE };
 
 class StateHandler {
 private:

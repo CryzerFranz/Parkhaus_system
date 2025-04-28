@@ -22,13 +22,21 @@ void StateHandler::transition(Events_E event, MQTTClient* mqtt_client) {
             state = GRANTED;
             break;
         case GRANTED_ACCESS:
+            mqtt_client->sendMessage("parkhaus/einfahrt_motion","0");
             state = GRANTED;
             break;
         case DENIED_ACCESS:
+            mqtt_client->sendMessage("parkhaus/einfahrt_motion","0");
             state = DENIED;
             break;
         case RESET:
             state = IDLE;
+            break;
+        case OPEN:
+            state = OPENING;
+            break;
+        case CLOSE:
+            state = CLOSING;
             break;
         default:
             break;
